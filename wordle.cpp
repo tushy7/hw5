@@ -15,8 +15,10 @@ using namespace std;
 // Add prototypes of helper functions here
 
 
-void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index);
-bool matchesConstraints(const string& word, const string& in, string floating);
+void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index, int blanksRemaining);
+
+// definition of primary wordle function
+void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index, int blanksRemaining);
 
 // definition of primary wordle function
 set<string> wordle(
@@ -25,50 +27,54 @@ set<string> wordle(
     const set<string>& dict)
 {
     set<string> results;
-    buildWords("", in, floating, dict, results, 0);
+    int blanks = 0;
+    for(unsigned int i = 0; i < in.size(); ++i){
+        if(in[i] == '-'){
+            ++blanks;
+        }
+    }
+    buildWords("", in, floating, dict, results, 0, blanks);
     return results;
 }
 
 // recursive helper function to build all possible words
-void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index)
+void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index, int blanksRemaining)
 {
-    // base case: finished building a full word
     if(index == (int)in.size()){
-        if(dict.find(partial) != dict.end() && matchesConstraints(partial, in, floating)){
+        if(floating.empty() && dict.find(partial) != dict.end()){
             results.insert(partial);
         }
         return;
     }
 
-    // fixed letter given
     if(in[index] != '-'){
-        buildWords(partial + in[index], in, floating, dict, results, index + 1);
+        buildWords(partial + in[index], in, floating, dict, results, index + 1, blanksRemaining);
     }
     else{
-        // try all lowercase letters at this position
-        for(char c = 'a'; c <= 'z'; ++c){
-            buildWords(partial + c, in, floating, dict, results, index + 1);
-        }
-    }
-}
+        set<char> options;
 
-// checks if a completed word satisfies floating letter requirements
-bool matchesConstraints(const string& word, const string& in, string floating)
-{
-    // make a copy of floating letters to cross off
-    for(int i = 0; i < (int)word.size(); ++i){
-        if(in[i] == '-'){
-            size_t pos = floating.find(word[i]);
-            if(pos != string::npos){
-                floating.erase(pos, 1);
+        // manually loop through floating string to add options
+        for(unsigned int i = 0; i < floating.size(); ++i){
+            options.insert(floating[i]);
+        }
+
+        // if blanks are more than floating letters, allow any letter
+        if(floating.size() < (unsigned int)blanksRemaining){
+            char c = 'a';
+            while(c <= 'z'){
+                options.insert(c);
+                ++c;
             }
         }
-        else{
-            if(word[i] != in[i]){
-                return false;
+
+        set<char>::iterator it;
+        for(it = options.begin(); it != options.end(); ++it){
+            string updatedFloating = floating;
+            size_t pos = updatedFloating.find(*it);
+            if(pos != string::npos){
+                updatedFloating.erase(pos, 1);
             }
+            buildWords(partial + *it, in, updatedFloating, dict, results, index + 1, blanksRemaining - 1);
         }
     }
-    // must have used up all floating letters
-    return floating.empty();
 }
