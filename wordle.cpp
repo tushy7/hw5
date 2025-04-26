@@ -14,9 +14,6 @@ using namespace std;
 
 // Add prototypes of helper functions here
 
-
-void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index, int blanksRemaining);
-
 // definition of primary wordle function
 void buildWords(string partial, const string& in, string floating, const set<string>& dict, set<string>& results, int index, int blanksRemaining);
 
